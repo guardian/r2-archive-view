@@ -1,0 +1,3 @@
+addCommandAlias("dist", ";play-artifact")
+
+

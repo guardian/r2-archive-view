@@ -13,6 +13,8 @@ object Application extends Controller with AwsInstanceTags{
     Ok(views.html.index(stage))
   }
 
+  import play.api.Play.current
+
   private def getDbHealth : Boolean = {
     DB.withConnection { conn =>
       // do whatever you need with the connection

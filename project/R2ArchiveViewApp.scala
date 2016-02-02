@@ -8,10 +8,10 @@ object R2ArchiveViewApp extends Build {
 
 
   val libDependencies = Seq(
+    jdbc,
     "com.amazonaws" % "aws-java-sdk" % "1.9.23",
     "net.logstash.logback" % "logstash-logback-encoder" % "4.2")
 
-  libraryDependencies += jdbc
 
   val commonSettings = Seq(
     scalaVersion := "2.11.1",

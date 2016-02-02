@@ -24,7 +24,7 @@ object R2ArchiveViewApp extends Build {
     doc in Compile <<= target.map(_ / "none"),
     incOptions := incOptions.value.withNameHashing(nameHashing = true)
   )
-  val projectName = "r2-archive-view-app"
+  val projectName = "r2-archive-view"
   lazy val root = Project(projectName, file(".")).enablePlugins(play.PlayScala)
     .settings(commonSettings ++ playArtifactDistSettings :_*)
     .settings(libraryDependencies  ++= libDependencies)

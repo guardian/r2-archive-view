@@ -1,2 +1,24 @@
-//TODO: replaceme
-//your deployment descriptors for riffraff
+{
+  "defaultStacks": ["r2"],
+  "packages": {
+    "r2-archive-view": {
+      "type": "autoscaling",
+      "data": {
+        "port": 9000,
+        "bucket": "r2-archive-view-dist",
+        "publicReadAcl": false
+      }
+    }
+  },
+  "recipes": {
+    "default": {
+      "depends": ["uploadArtifacts", "deploy"]
+    },
+    "deploy": {
+      "actionsBeforeApp": ["r2-archive-view.deploy"]
+    },
+    "uploadArtifacts": {
+      "actionsBeforeApp": ["r2-archive-view.uploadArtifacts"]
+    }
+  }
+}

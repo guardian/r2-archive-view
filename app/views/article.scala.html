@@ -54,9 +54,10 @@
                   url: "/articlejson/" + articleId,
                   type: "GET"
                 }).done(function(data) {
+                    if(!data) displayErrorResults();
                     displayResults(data);
                 }).fail(function(data){
-                    displayErrorResults(data);
+                    displayErrorResults();
                 });
             }
 
@@ -69,10 +70,9 @@
                 var body = data.body
                 $('#articleview_results').html("<span>" + body + "</span>");
             }
-            function displayErrorResults(data){
-                console.log(data);
-                var message = "Could not load article with ID " + id
-                $('#articlemigration_results').html("<span class=\"failed\">" + message + "</span>");
+            function displayErrorResults(){
+                var message = "Could not load the article in the migration archive"
+                $('#articleview_results').html("<span class=\"failed\">" + message + "</span>");
             }
 
             function articleView(){

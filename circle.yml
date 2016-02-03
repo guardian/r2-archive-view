@@ -3,7 +3,10 @@ machine:
     version: oraclejdk8
 general:
   artifacts:
-    - "target/artifacts.zip"
+    - "target/artifacts/deploy.json"
+    - "target/artifacts/packages/cloud-formation/r2-archive-view.json"
+    - "target/artifacts/packages/r2-archive-view/r2-archive-view.zip"
+    - "target/artifacts/packages/r2-archive-view/r2-archive-view.conf"
 test:
   override:
     - sbt test

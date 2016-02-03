@@ -3,11 +3,10 @@ machine:
     version: oraclejdk8
 general:
   artifacts:
-    - "target/artifacts.zip"
+    - "target/riffraff/artifacts.zip"
 test:
   override:
     - sbt test
     - sbt dist
   post:
-    - sbt riffRaffArtifact
     - sbt riffRaffUpload

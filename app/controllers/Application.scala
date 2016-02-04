@@ -32,11 +32,7 @@ object Application extends Controller with AwsInstanceTags{
 
 
   def healthcheck = Action {
-    val healthCheck : List[Boolean] = getDbHealth :: Nil
-    healthCheck.foldLeft(true)(_ && _) match {
-      case true => Ok("healthcheck is OK")
-      case false => InternalServerError("healthcheck failed")
-    }
+      Ok("healthcheck is OK")
   }
 
 }

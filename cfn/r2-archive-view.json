@@ -278,7 +278,7 @@
         "Scheme" : "internal",
         "Tags": [
           { "Key": "Stage", "Value": {"Ref": "Stage"}},
-          { "Key": "Stack", "Value": "r2"},
+          { "Key": "Stack", "Value": "flexible"},
           { "Key": "App",   "Value": "r2-archive-view"},
           {
             "Key": "Name",
@@ -326,7 +326,7 @@
           },
           {
             "Key": "Stack",
-            "Value": "r2",
+            "Value": "flexible",
             "PropagateAtLaunch": "true"
           },
           {
@@ -379,7 +379,7 @@
                   "Fn::Join": [
                     "",
                     [
-                      "https://s3-eu-west-1.amazonaws.com/r2-archive-view-dist/r2/",
+                      "https://s3-eu-west-1.amazonaws.com/r2-archive-view-dist/flexible/",
                       {
                         "Ref": "Stage"
                       },
@@ -389,16 +389,16 @@
                 },
                 "authentication": "distributionAuthentication"
               },
-              "/home/r2-archive-view/r2-archive-view.zip": {
+              "/home/r2-archive-view/r2-archive-view.tgz": {
                 "source": {
                   "Fn::Join": [
                     "",
                     [
-                      "https://s3-eu-west-1.amazonaws.com/r2-archive-view-dist/r2/",
+                      "https://s3-eu-west-1.amazonaws.com/r2-archive-view-dist/flexible/",
                       {
                         "Ref": "Stage"
                       },
-                      "/r2-archive-view/r2-archive-view.zip"
+                      "/r2-archive-view/r2-archive-view.tgz"
                     ]
                   ]
                 },
@@ -440,8 +440,7 @@
                   "Ref": "AWS::Region"
                 },
                 " || error_exit 'Failed to run cfn-init'\n",
-                "/opt/features/gnm-dns/install.sh\n",
-                "unzip -d /home/r2-archive-view /home/r2-archive-view/r2-archive-view.zip \n",
+                "unzip -d /home/r2-archive-view /home/r2-archive-view/r2-archive-view.tgz \n",
                 "mkdir /home/r2-archive-view/logs\n",
                 "chown -R r2-archive-view /home/r2-archive-view\n",
                 "chgrp -R r2-archive-view /home/r2-archive-view\n",

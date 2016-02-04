@@ -1,0 +1,27 @@
+machine:
+  java:
+    version: oraclejdk8
+general:
+  artifacts:
+    - "target/riffraff/artifacts.zip"
+dependencies:
+  pre:
+    - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.9.deb
+    - sudo dpkg -i sbt-0.13.9.deb
+  # Cache the resolution-cache and build streams to speed things up
+  cache_directories:
+    - "~/.sbt"
+    - "target/resolution-cache"
+    - "target/streams"
+    - "project/target/resolution-cache"
+    - "project/target/streams"
+  # Compile all sources
+  override:
+    - sbt test:compile
+
+test:
+  override:
+    - sbt test
+    - sbt dist
+  post:
+    - sbt riffRaffUpload

@@ -1,0 +1,416 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "R2 Archive View",
+  "Parameters": {
+    "GuardianIP": {
+      "Description": "Ip range for the office",
+      "Type": "String",
+      "Default": "77.91.248.0/21"
+    },
+    "Stage": {
+      "Description": "Environment name",
+      "Type": "String",
+      "AllowedValues": [
+        "CODE",
+        "RELEASE",
+        "PROD"
+      ],
+      "Default": "PROD"
+    },
+    "VpcId": {
+      "Description": "ID of the VPC onto which to launch the application eg. vpc-1234abcd",
+      "Type": "AWS::EC2::VPC::Id",
+      "Default": "vpc-381fa95d"
+    },
+    "PublicVpcSubnets": {
+      "Description": "Subnets to use in VPC for public internet-facing ELB eg. subnet-abcd1234",
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Default": "subnet-c3620fa6,subnet-2b37bd5c,subnet-3667c86f"
+    },
+    "PrivateVpcSubnets": {
+      "Description": "Subnets to use in VPC for private EC2 instances eg. subnet-abcd1234",
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Default": "subnet-c2620fa7,subnet-2a37bd5d,subnet-2967c870"
+    },
+    "SSLCertificateARN": {
+      "Description": "The ARN of the SSL certificate to use in the ELB",
+      "Type": "String"
+    },
+    "KeyName":{
+      "Description":"The EC2 Key Pair to allow SSH access to the instance",
+      "Type":"String",
+      "Default":"composer-team"
+    },
+    "DbUser": {
+      "Description": "The R2 database username",
+      "Type": "String",
+      "Default": "REPLACE_ME"
+    },
+    "DbPassword": {
+      "Description": "The R2 database password",
+      "Type": "String",
+      "Default": "REPLACE_ME"
+    }
+  },
+  "Resources": {
+    "R2ArchiveViewInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "R2ArchiveViewRole"
+          }
+        ]
+      }
+    },
+    "R2ArchiveViewRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "dist",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject"
+                  ],
+                  "Resource": [
+                    "arn:aws:s3:::r2-archive-view-dist/*"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "tag",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "EC2:Describe*"
+                  ],
+                  "Resource": ["*"]
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "cloudwatch",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "cloudwatch:*"
+                  ],
+                  "Resource": ["*"]
+                }
+              ]
+            }
+          }
+        ]
+
+      }
+    },
+    "SSHSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Allow SSH access from the office",
+        "VpcId": { "Ref": "VpcId" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
+    },
+    "PublicLoadBalancerSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "R2 Archive View application load balancer for office access",
+        "VpcId": { "Ref": "VpcId" },
+        "SecurityGroupIngress": [
+          { "IpProtocol": "tcp", "FromPort": "443", "ToPort": "443", "CidrIp": {"Ref":  "GuardianIP"}},
+          { "IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "CidrIp": {"Ref":    "GuardianIP"}}
+        ]
+      }
+    },
+    "AppServerSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Application servers",
+        "VpcId": { "Ref": "VpcId" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 9000,
+            "ToPort": 9000,
+            "CidrIp": {"Ref": "GuardianIP"}
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 9000,
+            "ToPort": 9000,
+            "SourceSecurityGroupId": { "Ref": "PublicLoadBalancerSecurityGroup" }
+          }
+        ]
+      }
+    },
+    "R2ArchiveViewPublicLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "CrossZone": true,
+        "Subnets": { "Ref": "PublicVpcSubnets" },
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "PublicLoadBalancerSecurityGroup",
+              "GroupId"
+            ]
+          }
+        ],
+        "Listeners": [
+          {
+            "LoadBalancerPort": "80",
+            "InstancePort": "9000",
+            "Protocol": "HTTP"
+          },
+          {
+            "LoadBalancerPort": "443",
+            "InstancePort": "9000",
+            "Protocol": "HTTPS",
+            "SSLCertificateId": { "Ref": "SSLCertificateARN"}
+          }
+        ],
+        "HealthCheck": {
+          "Target": "HTTP:9000/management/healthcheck",
+          "HealthyThreshold": "2",
+          "UnhealthyThreshold": "2",
+          "Interval": "20",
+          "Timeout": "5"
+        },
+        "Tags": [
+          { "Key": "Stage", "Value": {"Ref": "Stage"}},
+          { "Key": "Stack", "Value": "flexible"},
+          { "Key": "App",   "Value": "r2-archive-view"},
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "r2-archive-view", {"Ref": "Stage"}
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "R2ArchiveViewAutoscalingGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "AvailabilityZones": { "Fn::GetAZs": "" },
+        "VPCZoneIdentifier": { "Ref": "PrivateVpcSubnets" },
+        "LaunchConfigurationName": {
+          "Ref": "R2ArchiveViewLaunchConfig"
+        },
+        "MinSize": "2",
+        "MaxSize": "4",
+        "DesiredCapacity": "2",
+        "Cooldown": "180",
+        "HealthCheckType": "ELB",
+        "HealthCheckGracePeriod": 600,
+        "LoadBalancerNames": [
+          {
+            "Ref": "R2ArchiveViewPublicLoadBalancer"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Stage",
+            "Value": {
+              "Ref": "Stage"
+            },
+            "PropagateAtLaunch": "true"
+          },
+          {
+            "Key": "Stack",
+            "Value": "flexible",
+            "PropagateAtLaunch": "true"
+          },
+          {
+            "Key": "App",
+            "Value": "r2-archive-view",
+            "PropagateAtLaunch": "true"
+          },
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "r2-archive-view",
+                  {
+                    "Ref": "Stage"
+                  }
+                ]
+              ]
+            },
+            "PropagateAtLaunch": "true"
+          }
+        ]
+      }
+    },
+    "R2ArchiveViewLaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "AWS::CloudFormation::Authentication": {
+          "distributionAuthentication": {
+            "type": "S3",
+            "roleName": {
+              "Ref": "R2ArchiveViewRole"
+            },
+            "buckets": [
+              "r2-archive-view-dist"
+            ]
+          }
+        },
+        "AWS::CloudFormation::Init": {
+          "config": {
+            "users": {
+              "r2-archive-view": {
+                "homeDir": "/home/r2-archive-view"
+              }
+            },
+            "files": {
+              "/etc/init/r2-archive-view.conf": {
+                "source": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "https://s3-eu-west-1.amazonaws.com/r2-archive-view-dist/flexible/",
+                      {
+                        "Ref": "Stage"
+                      },
+                      "/r2-archive-view/r2-archive-view.conf"
+                    ]
+                  ]
+                },
+                "authentication": "distributionAuthentication"
+              },
+              "/home/r2-archive-view/r2-archive-view.tgz": {
+                "source": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "https://s3-eu-west-1.amazonaws.com/r2-archive-view-dist/flexible/",
+                      {
+                        "Ref": "Stage"
+                      },
+                      "/r2-archive-view/r2-archive-view.tgz"
+                    ]
+                  ]
+                },
+                "authentication": "distributionAuthentication"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "KeyName":{ "Ref":"KeyName" },
+        "ImageId": "ami-fe4c0889",
+        "InstanceType": "t2.small",
+        "SecurityGroups": [
+          {
+            "Ref": "AppServerSecurityGroup"
+          },
+          {
+            "Ref": "SSHSecurityGroup"
+          }
+        ],
+        "IamInstanceProfile": {
+          "Ref": "R2ArchiveViewInstanceProfile"
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -ev\n",
+
+                "cfn-init -s ",
+                {
+                  "Ref": "AWS::StackId"
+                },
+                " -r R2ArchiveViewLaunchConfig ",
+                "  --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                " || error_exit 'Failed to run cfn-init'\n",
+                "tar -xvf /home/r2-archive-view/r2-archive-view.tgz  -C /home/r2-archive-view \n",
+                "mkdir /home/r2-archive-view/logs\n",
+                "chown -R r2-archive-view /home/r2-archive-view\n",
+                "chgrp -R r2-archive-view /home/r2-archive-view\n",
+
+                "stage=$(echo ", { "Ref": "Stage" }, "| tr '[:upper:]' '[:lower:]')\n",
+                "echo stage=$stage\n",
+                "sed -i \\\n",
+                "    -e 's,@STAGE@,'$stage',g' \\\n",
+                "    /etc/init/r2-archive-view.conf\n",
+
+                "dbUser=$(echo ", { "Ref": "DbUser" }, ")\n",
+                "sed -i \\\n",
+                "    -e 's,@db.user@,'$dbUser',g' \\\n",
+                "    /etc/init/r2-archive-view.conf\n",
+
+                "dbPwd=$(echo ", { "Ref": "DbPassword" }, ")\n",
+                "sed -i \\\n",
+                "    -e 's,@db.password@,'$dbPwd',g' \\\n",
+                "    /etc/init/r2-archive-view.conf\n",
+
+                "start r2-archive-view\n"
+              ]
+            ]
+          }
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "R2ArchiveViewPublicLoadBalancerDNS": {
+      "Description": "Public Load balancer DNS",
+      "Value": {
+        "Fn::GetAtt": [
+          "R2ArchiveViewPublicLoadBalancer",
+          "DNSName"
+        ]
+      }
+    }
+  }
+}

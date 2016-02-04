@@ -18,7 +18,7 @@ class IntegrationSpec extends Specification {
 
       browser.goTo("http://localhost:" + port)
 
-      browser.pageSource must contain("gdn-aws-play-sample-app (local)")
+      browser.pageSource must contain("R2 Archive View (local)")
     }
   }
 }

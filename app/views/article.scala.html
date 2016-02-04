@@ -68,7 +68,10 @@
                 console.log(data);
                 var id = data.id;
                 var body = data.body
-                $('#articleview_results').html("<span>" + body + "</span>");
+                var previewHtml = "<div id=\"article_html\" class=\"results\">" + body + "</div>"
+                var rawHtml = "<div id=\"article_rawHtml\" class=\"results\"></div>"
+                $('#articleview_results').html(rawHtml + previewHtml);
+                $('#article_rawHtml').text(body);
             }
             function displayErrorResults(){
                 var message = "Could not load the article in the migration archive"
@@ -96,7 +99,7 @@
             <input  type="text" name="articleid" id="articleid">
             <button type="button" onclick="articleView()" id="view">View Article In Archive</button>
 
-            <div id="articleview_results" class="results">
+            <div id="articleview_results">
 
             </div>
         </div>

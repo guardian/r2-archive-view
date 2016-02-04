@@ -1,5 +1,5 @@
 {
-  "defaultStacks": ["r2"],
+  "defaultStacks": ["flexible"],
   "packages": {
     "r2-archive-view": {
       "type": "autoscaling",

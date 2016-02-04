@@ -39,7 +39,7 @@ object R2ArchiveViewApp extends Build {
       .settings(
         riffRaffPackageType := (packageZipTarball in config("universal")).value,
         riffRaffPackageName := name.value,
-        riffRaffManifestProjectName := s"r2ArchiveView:${name.value}",
+        riffRaffManifestProjectName := s"r2:${name.value}",
         riffRaffBuildIdentifier := Option(System.getenv("CIRCLE_BUILD_NUM")).getOrElse("DEV"),
         riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
         riffRaffUploadManifestBucket := Option("riffraff-builds")

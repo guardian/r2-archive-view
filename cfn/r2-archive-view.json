@@ -232,7 +232,7 @@
         },
         "Tags": [
           { "Key": "Stage", "Value": {"Ref": "Stage"}},
-          { "Key": "Stack", "Value": "r2"},
+          { "Key": "Stack", "Value": "flexible"},
           { "Key": "App",   "Value": "r2-archive-view"},
           {
             "Key": "Name",

@@ -440,7 +440,7 @@
                   "Ref": "AWS::Region"
                 },
                 " || error_exit 'Failed to run cfn-init'\n",
-                "unzip -d /home/r2-archive-view /home/r2-archive-view/r2-archive-view.tgz \n",
+                "sudo tar -xvf /home/r2-archive-view/r2-archive-view.tgz  -C /home/r2-archive-view \n",
                 "mkdir /home/r2-archive-view/logs\n",
                 "chown -R r2-archive-view /home/r2-archive-view\n",
                 "chgrp -R r2-archive-view /home/r2-archive-view\n",

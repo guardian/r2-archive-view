@@ -158,18 +158,6 @@
         ]
       }
     },
-    "VPNLoadBalancerSecurityGroup": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "GroupDescription": "R2 Archive View application load balancer for datacenter / VPN acccess",
-        "VpcId": { "Ref": "VpcId" },
-        "SecurityGroupIngress": [
-          { "IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "CidrIp": "10.235.51.0/24" },
-          { "IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "CidrIp": "10.236.51.0/24" },
-          { "IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "CidrIp": "10.235.22.0/24" }
-        ]
-      }
-    },
     "AppServerSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
@@ -187,12 +175,6 @@
             "FromPort": 9000,
             "ToPort": 9000,
             "SourceSecurityGroupId": { "Ref": "PublicLoadBalancerSecurityGroup" }
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": 9000,
-            "ToPort": 9000,
-            "SourceSecurityGroupId": { "Ref": "VPNLoadBalancerSecurityGroup" }
           }
         ]
       }
@@ -227,55 +209,9 @@
           "Target": "HTTP:9000/management/healthcheck",
           "HealthyThreshold": "2",
           "UnhealthyThreshold": "2",
-          "Interval": "10",
+          "Interval": "20",
           "Timeout": "5"
         },
-        "Tags": [
-          { "Key": "Stage", "Value": {"Ref": "Stage"}},
-          { "Key": "Stack", "Value": "flexible"},
-          { "Key": "App",   "Value": "r2-archive-view"},
-          {
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": [
-                "-",
-                [
-                  "r2-archive-view", {"Ref": "Stage"}
-                ]
-              ]
-            }
-          }
-        ]
-      }
-    },
-    "R2ArchiveViewVPNLoadBalancer": {
-      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-      "Properties": {
-        "CrossZone": true,
-        "Subnets": { "Ref": "PrivateVpcSubnets" },
-        "SecurityGroups": [
-          {
-            "Fn::GetAtt": [
-              "VPNLoadBalancerSecurityGroup",
-              "GroupId"
-            ]
-          }
-        ],
-        "Listeners": [
-          {
-            "LoadBalancerPort": "80",
-            "InstancePort": "9000",
-            "Protocol": "HTTP"
-          }
-        ],
-        "HealthCheck": {
-          "Target": "HTTP:9000/management/healthcheck",
-          "HealthyThreshold": "2",
-          "UnhealthyThreshold": "2",
-          "Interval": "10",
-          "Timeout": "5"
-        },
-        "Scheme" : "internal",
         "Tags": [
           { "Key": "Stage", "Value": {"Ref": "Stage"}},
           { "Key": "Stack", "Value": "flexible"},
@@ -307,13 +243,10 @@
         "DesiredCapacity": "2",
         "Cooldown": "180",
         "HealthCheckType": "ELB",
-        "HealthCheckGracePeriod": 300,
+        "HealthCheckGracePeriod": 600,
         "LoadBalancerNames": [
           {
             "Ref": "R2ArchiveViewPublicLoadBalancer"
-          },
-          {
-            "Ref": "R2ArchiveViewVPNLoadBalancer"
           }
         ],
         "Tags": [
@@ -440,7 +373,7 @@
                   "Ref": "AWS::Region"
                 },
                 " || error_exit 'Failed to run cfn-init'\n",
-                "sudo tar -xvf /home/r2-archive-view/r2-archive-view.tgz  -C /home/r2-archive-view \n",
+                "tar -xvf /home/r2-archive-view/r2-archive-view.tgz  -C /home/r2-archive-view \n",
                 "mkdir /home/r2-archive-view/logs\n",
                 "chown -R r2-archive-view /home/r2-archive-view\n",
                 "chgrp -R r2-archive-view /home/r2-archive-view\n",
@@ -475,15 +408,6 @@
       "Value": {
         "Fn::GetAtt": [
           "R2ArchiveViewPublicLoadBalancer",
-          "DNSName"
-        ]
-      }
-    },
-    "R2ArchiveViewVPNLoadBalancerDNS": {
-      "Description": "VPN Load balancer DNS",
-      "Value": {
-        "Fn::GetAtt": [
-          "R2ArchiveViewVPNLoadBalancer",
           "DNSName"
         ]
       }

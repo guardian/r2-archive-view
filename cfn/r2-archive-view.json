@@ -457,7 +457,7 @@
                 "    -e 's,@db.user@,'$dbUser',g' \\\n",
                 "    /etc/init/r2-archive-view.conf\n",
 
-                "dbPwd=$(echo ", { "Ref": "DBPassword" }, ")\n",
+                "dbPwd=$(echo ", { "Ref": "DbPassword" }, ")\n",
                 "sed -i \\\n",
                 "    -e 's,@db.password@,'$dbPwd',g' \\\n",
                 "    /etc/init/r2-archive-view.conf\n",

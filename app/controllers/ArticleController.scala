@@ -15,18 +15,29 @@ object ArticleController {
 
   implicit val articleWrites: Writes[model.Article] = (
     (JsPath \ "id").write[Int] and
+    (JsPath \ "headline").write[String] and
     (JsPath \ "body").write[String]
   )(unlift(model.Article.unapply))
 
-  private def loadArticle(id : Int) : Option[model.Article] = {
-    //TODO: this is a hack etc
+
+  private def loadArchiveField(sql : String) : Option[String] = {
     DB.withConnection { conn =>
       val stmt = conn.createStatement
-
-      val rs = stmt.executeQuery(s"SELECT body from article_live_mgrbu where id = ${id}")
-      if (rs.next()) Some(Article(id.toInt, rs.getString(1)));
+      val rs = stmt.executeQuery(sql)
+      if (rs.next()) Some(rs.getString(1));
       else None
     }
+  }
+
+  private def loadArchiveBody(id : Int) = loadArchiveField(s"SELECT body from article_live_mgrbu where id = ${id}")
+
+  private def loadArchiveHeadline(id : Int) = loadArchiveField(s"SELECT headline from content_live_mgrbu where id = ${id}")
+
+
+  private def loadArticle(id : Int) : Option[model.Article] = {
+    for(  headline <-loadArchiveHeadline(id);
+          body <- loadArchiveBody(id))
+      yield Article(id, headline, body)
   }
 
 

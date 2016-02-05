@@ -36,6 +36,8 @@
         <script>
             $(document).ready(function (){
                var $loading = $('#loadingDiv').hide();
+                $('#articleview_results_success').hide();
+                $('#articleview_results_error').hide();
                $(document)
                  .ajaxStart(function () {
                     //ajax request went so show the loading image
@@ -50,6 +52,8 @@
             })
 
             function articleViewAjax(articleId){
+                $('#articleview_results_success').hide();
+                $('#articleview_results_error').hide();
                 $.ajax({
                   url: "/articlejson/" + articleId,
                   type: "GET"
@@ -63,19 +67,23 @@
 
             function clearPreviousResults(){
                 $('#articleid').html("");
+                $('#articleview_results_success').hide();
+                $('#articleview_results_error').hide();
             }
             function displayResults(data){
+                $('#articleview_results_success').show();
                 console.log(data);
                 var id = data.id;
+                var headline = data.headline
                 var body = data.body
-                var previewHtml = "<div id=\"article_html\" class=\"results\">" + body + "</div>"
-                var rawHtml = "<div id=\"article_rawHtml\" class=\"results\"></div>"
-                $('#articleview_results').html(rawHtml + previewHtml);
+                $('#article_headline').text(headline);
+                $('#article_html').html(body);
                 $('#article_rawHtml').text(body);
             }
             function displayErrorResults(){
+                $('#articleview_results_error').show();
                 var message = "Could not load the article in the migration archive"
-                $('#articleview_results').html("<span class=\"failed\">" + message + "</span>");
+                $('#articleview_results_error').html("<span class=\"failed\">" + message + "</span>");
             }
 
             function articleView(){
@@ -99,7 +107,21 @@
             <input  type="text" name="articleid" id="articleid">
             <button type="button" onclick="articleView()" id="view">View Article In Archive</button>
 
+
             <div id="articleview_results">
+                <div id="articleview_results_success">
+                    Headline:
+                    <div id="article_headline" class="results"></div>
+                    Body (raw):
+                    <div id="article_html" class="results">
+                    </div>
+                    Body:
+                    <div id="article_rawHtml" class="results">
+                    </div>
+                </div>
+                <div id="articleview_results_error" class="failed">
+                    Could not load the article in the migration archive
+                </div>
 
             </div>
         </div>
